@@ -7,15 +7,22 @@
 #include <string.h>     // for strdup()
 #include <fcntl.h>      // for open() flags like O_CREAT, O_WRONLY
 
+char pathList[255][50];
+
 static void error(void) {
     char message[] = "An error has occured";
     printf("%s", message);
     fflush(NULL);
 }
 
-// char arguments(char* line, char*** argv_out) {
+void path(char paths[][50]) {
+    int i = 1;
+    while (paths[i][0] != '\0') {
+        printf("This is path [%d] -> %s\n", i, paths[i]);
+        i++;
+    }
+}
 
-// }
 
 int main(int argc, char* argv[]) {
     // char input[255];
@@ -53,6 +60,17 @@ int main(int argc, char* argv[]) {
             wordList[i][sizeof(wordList[i] - 1)] = '\0';
             i++;
         }
+
+        wordList[i][0] = '\0';
+
+        // for (int j = 0; j < i; j++) {
+        //     printf("Words -> %s\n", wordList[j]);
+        // }
+
+        if (strcmp(wordList[0], "path") == 0) {
+            path(wordList);
+        }
+
         
     }
     
