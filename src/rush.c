@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -12,12 +13,17 @@ static void error(void) {
     fflush(NULL);
 }
 
+// char arguments(char* line, char*** argv_out) {
+
+// }
+
 int main(int argc, char* argv[]) {
     // char input[255];
-    const char* env = getenv("PATH");
-    char* input = NULL;
-    size_t len = 0;
+    char* input;
+    size_t len = 255;
     ssize_t nread;
+
+    input = (char *)malloc(len * sizeof(char));
 
     if (argc > 1) {
         error();
@@ -29,30 +35,27 @@ int main(int argc, char* argv[]) {
         fflush(stdout);
         nread = getline(&input, &len, stdin);
         
-        if (nread > 0 && input[nread - 1] == '\n') {
-            input[nread-1] = '\0';
-        }
-        
-        char* work = strdup(input);
-
-        if (strcmp(input, "cd") == 0) {
-            chdir(input);
-        }
-
-
-        if (nread == -1) {
-            break;
-        }
-
-        if (input[0] == '\0') {
-            continue;
-        }
-
-        if (strcmp(input, "exit") == 0) {
+        if (strcmp(input, "exit\n") == 0) {
             exit(0);
         }
-    }
 
+        if (nread > 0 && input[nread-1] == '\n') input[nread-1] = '\0';
+        
+        char* word;
+        char *p = input;
+        char wordList[255][50];
+        int i = 0;
+        while ((word = strsep(&p, " ")) != NULL) {
+            if (*word == '\0') continue;
+
+            // Add words to array
+            strncpy(wordList[i], word, sizeof(wordList[i] - 1));
+            wordList[i][sizeof(wordList[i] - 1)] = '\0';
+            i++;
+        }
+        
+    }
+    
     free(input);
 
     return 0;
