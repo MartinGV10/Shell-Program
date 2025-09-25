@@ -178,6 +178,65 @@ void execute_external(char args[][50], int n) {
 }
 
 
+void echo(char args[][50], int n) {
+    int gt_pos = -1;
+    for (int i = 1; i < n; i++) {
+        if (strcmp(args[i], ">") == 0) {
+            if (gt_pos != -1) {
+                error();
+                return;
+            }
+            gt_pos = i;
+        }
+    }
+
+    if (gt_pos != -1) {
+        if (gt_pos == 1 || gt_pos != n - 2) {
+            error();
+            return;
+        }
+    }
+
+    int main_args = (gt_pos == -1) ? n : gt_pos;
+
+    char buffer[1024] = "";
+    for (int i = 1; i < main_args; i++) {
+        strcat(buffer, args[i]);
+        if (i < main_args -1) strcat(buffer, " ");
+    }
+
+    if (gt_pos == -1) {
+        printf("%s\n", buffer);
+        fflush(stdout);
+    }
+
+    else {
+        char *filename = args[gt_pos + 1];
+        int outfd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+        if (outfd <  0) {
+            error();
+            return;
+        }
+
+        if (write(outfd, buffer, strlen(buffer)) < 0 || write(outfd, "\n", 1) < 0) {
+            error();
+            close(outfd);
+            return;
+        }
+        close(outfd);
+    }
+
+
+}
+
+
+
+
+
+
+
+
+
 int main(int argc, char* argv[]) {
     // Init input variables and sizes
     char* input;
@@ -253,6 +312,10 @@ int main(int argc, char* argv[]) {
                     error();
                 }
             }
+        }
+
+        else if (strcmp(wordList[0], "echo") == 0) {
+            echo(wordList, i);
         }
 
         // if any other input, check execute_external
