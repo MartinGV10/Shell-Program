@@ -130,6 +130,7 @@ void execute_external(char args[][50], int n) {
     for(i = 0; i < main_args; i++) {
         args_to_execute[i] = strdup(args[i]);
     }
+    args_to_execute[0] = strdup(fullpath);
     args_to_execute[main_args] = NULL;
 
     int outfd = -1; // File descriptor for output redirection
@@ -173,23 +174,27 @@ void execute_external(char args[][50], int n) {
         return;
     }
     if(outfd != -1) close(outfd);   // Close file descriptor (child inherited it)
-    waitpid(pid, NULL, 0);          // Wait for child to finish
-    
+    waitpid(pid, NULL, 0);          // Wait for child to finish    
 }
 
 
 void echo(char args[][50], int n) {
-    int gt_pos = -1;
+    int gt_pos = -1;                // index of ">" if present; -1 means none
+
+    // Scan for a single ">" token
     for (int i = 1; i < n; i++) {
         if (strcmp(args[i], ">") == 0) {
-            if (gt_pos != -1) {
+            if (gt_pos != -1) { // found a second ">" → invalid
                 error();
                 return;
             }
-            gt_pos = i;
+            gt_pos = i;     // remember where ">" is
         }
     }
 
+    // Validate redirection syntax if ">" was found:
+    //  - there must be at least one word before ">" (i.e., some text to echo)
+    //  - there must be exactly one filename after ">"
     if (gt_pos != -1) {
         if (gt_pos == 1 || gt_pos != n - 2) {
             error();
@@ -197,8 +202,10 @@ void echo(char args[][50], int n) {
         }
     }
 
+    // Number of tokens that belong to the message (exclude ">" and filename)
     int main_args = (gt_pos == -1) ? n : gt_pos;
 
+    // Build the output line from args[1..main_args-1], separating by spaces
     char buffer[1024] = "";
     for (int i = 1; i < main_args; i++) {
         strcat(buffer, args[i]);
@@ -206,11 +213,13 @@ void echo(char args[][50], int n) {
     }
 
     if (gt_pos == -1) {
+        // No redirection: print to stdout followed by newline (to match prompt layout)
         printf("%s\n", buffer);
         fflush(stdout);
     }
 
     else {
+        // With redirection: open/create target file, truncate, and write the line + newline
         char *filename = args[gt_pos + 1];
         int outfd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0644);
         if (outfd <  0) {
@@ -218,6 +227,7 @@ void echo(char args[][50], int n) {
             return;
         }
 
+        // Write message and newline; on any write error, emit generic shell error
         if (write(outfd, buffer, strlen(buffer)) < 0 || write(outfd, "\n", 1) < 0) {
             error();
             close(outfd);
@@ -225,17 +235,7 @@ void echo(char args[][50], int n) {
         }
         close(outfd);
     }
-
-
 }
-
-
-
-
-
-
-
-
 
 int main(int argc, char* argv[]) {
     // Init input variables and sizes
@@ -250,7 +250,9 @@ int main(int argc, char* argv[]) {
         error();
         exit(0);
     }
-    
+
+    strcpy(pathList[1], "/bin"); // make the initial path /bin
+    numOfPaths = 1;
 
     while (true) {
         // rush> constatnly prints
