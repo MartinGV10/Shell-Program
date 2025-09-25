@@ -220,10 +220,6 @@ int main(int argc, char* argv[]) {
         }
         wordList[i][0] = '\0'; //set null character at end of array
 
-        if (i == 0) {
-            continue;
-        }
-
         // Check for path  input
         if (strcmp(wordList[0], "path") == 0) {
             path(wordList, i);
